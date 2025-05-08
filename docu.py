@@ -96,7 +96,8 @@ fig2 = px.bar(
     text='cantidad_prestaciones'
 )
 
-# Ajustar layout para que se use todo el ancho
+# Ajustar layout
+
 fig2.update_layout(
     title_x=0.4,  # Centra el título
     height=600
@@ -178,13 +179,13 @@ fig4.update_traces(
     textangle=0  # Forzar el texto en horizontal
 )
 
-# Ajustar layout para que se use todo el ancho
+# Ajustar layout
 fig4.update_layout(
     title_x=0.3,  # Centra el título
 )
 
 # Mostrar en Streamlit
-st.plotly_chart(fig4, use_container_width=False)
+#st.plotly_chart(fig4, use_container_width=False)
 
 
 
