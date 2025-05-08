@@ -174,6 +174,10 @@ fig4 = px.bar(
     text='cantidad_prestaciones'
 )
 
+fig4.update_traces(
+    textangle=0  # Forzar el texto en horizontal
+)
+
 # Ajustar layout para que se use todo el ancho
 fig4.update_layout(
     title_x=0.3,  # Centra el título
