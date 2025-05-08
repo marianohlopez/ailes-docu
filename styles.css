@@ -1,4 +1,11 @@
+.card-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
 .card {
+  width: 450px;
   background-color: #f8f9fa;
   padding: 20px;
   margin: 10px;
@@ -19,5 +26,5 @@
 }
 
 .space {
-  height: 100px;
+  height: 90px;
 }
