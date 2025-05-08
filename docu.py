@@ -70,6 +70,37 @@ with col2:
     </div>
     """, unsafe_allow_html=True)   
 
+
+# Tarjeta - Porcentaje de alumnos autorizados hasta diciembre
+
+query3 = """
+    SELECT 
+        ROUND(
+            (SUM(CASE WHEN MONTH(prestacion_fec_aut_OS_hasta) = 12 THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2
+        ) AS porcentaje_diciembre
+    FROM 
+        v_prestaciones
+    WHERE 
+        prestacion_estado_descrip = 'ACTIVA' COLLATE utf8mb4_0900_ai_ci
+        AND prestacion_fec_aut_OS_hasta IS NOT NULL;
+"""
+
+df3 = pd.read_sql(query3, conn)
+
+# Extraer los valores
+porc_alumnos_dic = df3['porcentaje_diciembre'][0]
+
+# Mostrar en tarjeta
+
+st.markdown(f"""
+    <div class="card-container">
+        <div class="card">
+            <div class="card-title">Porcentaje de autorizados hasta diciembre</div>
+            <div class="card-value">{porc_alumnos_dic} %</div>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
+
 st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
 # Grafico de barras-cant de alumnos por obra social
@@ -108,37 +139,6 @@ st.plotly_chart(fig2, use_container_width=False)
 
 st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
-# Tarjeta - Porcentaje de alumnos autorizados hasta diciembre
-
-query3 = """
-    SELECT 
-        ROUND(
-            (SUM(CASE WHEN MONTH(prestacion_fec_aut_OS_hasta) = 12 THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2
-        ) AS porcentaje_diciembre
-    FROM 
-        v_prestaciones
-    WHERE 
-        prestacion_estado_descrip = 'ACTIVA' COLLATE utf8mb4_0900_ai_ci
-        AND prestacion_fec_aut_OS_hasta IS NOT NULL;
-"""
-
-df3 = pd.read_sql(query3, conn)
-
-# Extraer los valores
-porc_alumnos_dic = df3['porcentaje_diciembre'][0]
-
-# Mostrar en tarjeta
-
-st.markdown(f"""
-    <div class="card-container">
-        <div class="card">
-            <div class="card-title">Porcentaje de autorizados hasta diciembre</div>
-            <div class="card-value">{porc_alumnos_dic} %</div>
-        </div>
-    </div>
-""", unsafe_allow_html=True)
-
-st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
 # Grafico Fechas de finalizacion de autorizaciones
 
