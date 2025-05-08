@@ -93,14 +93,13 @@ fig2 = px.bar(
     y='cantidad_prestaciones',
     title='Cantidad de prestaciones por obra social',
     labels={'obra_social': 'Obra Social', 'cantidad_prestaciones': 'Cantidad'},
+    text='cantidad_prestaciones'
 )
 
 # Ajustar layout para que se use todo el ancho
 fig2.update_layout(
     title_x=0.4,  # Centra el título
-    margin=dict(l=100, r=0, t=40, b=20),
-    width=1200,
-    height=500
+    height=600
 )
 
 # Mostrar en Streamlit
