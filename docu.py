@@ -32,7 +32,7 @@ conn = mysql.connector.connect(
 
 # Tarjetas - cant de alumnos y cant de prestaciones
 
-query = """
+q_prest_alum = """
     SELECT 
         COUNT(DISTINCT a.alumno_id) AS cant_alumnos,
         COUNT(DISTINCT p.prestacion_id) AS cant_prestaciones
@@ -41,11 +41,11 @@ query = """
     WHERE p.prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci;
 """
 
-df = pd.read_sql(query, conn)
+df_prest_alum = pd.read_sql(q_prest_alum, conn)
 
 # Extraer los valores
-cant_alumnos = df['cant_alumnos'][0]
-cant_prestaciones = df['cant_prestaciones'][0]
+cant_alumnos = df_prest_alum['cant_alumnos'][0]
+cant_prestaciones = df_prest_alum['cant_prestaciones'][0]
 
 # Mostrar en tarjetas
 col1, col2 = st.columns(2)
@@ -73,7 +73,7 @@ with col2:
 
 # Tarjeta - Porcentaje de alumnos autorizados hasta diciembre
 
-query3 = """
+q_alum_aut = """
     SELECT 
         ROUND(
             (SUM(CASE WHEN MONTH(prestacion_fec_aut_OS_hasta) = 12 THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2
@@ -85,10 +85,10 @@ query3 = """
         AND prestacion_fec_aut_OS_hasta IS NOT NULL;
 """
 
-df3 = pd.read_sql(query3, conn)
+df_alum_aut = pd.read_sql(q_alum_aut, conn)
 
 # Extraer los valores
-porc_alumnos_dic = df3['porcentaje_diciembre'][0]
+porc_alumnos_dic = df_alum_aut['porcentaje_diciembre'][0]
 
 # Mostrar en tarjeta
 
@@ -105,21 +105,21 @@ st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
 # Grafico de barras-cant de alumnos por obra social
 
-query2 = """
+q_alum_os = """
     SELECT o.os_nombre AS obra_social, COUNT(p.prestacion_id) AS cantidad_prestaciones
     FROM v_prestaciones p JOIN v_os o 
     ON p.prestacion_os = o.os_id
     WHERE prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
     GROUP BY obra_social
 """
-df2 = pd.read_sql(query2, conn)
+df_alum_os = pd.read_sql(q_alum_os, conn)
 
 # Asegurar orden correcto
-df2 = df2.sort_values('cantidad_prestaciones', ascending=False)
+df_alum_os = df_alum_os.sort_values('cantidad_prestaciones', ascending=False)
 
 # Gráfico
-fig2 = px.bar(
-    df2,
+fig_alum_os = px.bar(
+    df_alum_os,
     x='obra_social',
     y='cantidad_prestaciones',
     title='Cantidad de prestaciones por obra social',
@@ -127,22 +127,26 @@ fig2 = px.bar(
     text='cantidad_prestaciones'
 )
 
+fig_alum_os.update_xaxes(
+    tickangle=-45  # Forzar el texto en horizontal
+)
+
 # Ajustar layout
 
-fig2.update_layout(
+fig_alum_os.update_layout(
     title_x=0.4,  # Centra el título
     height=600
 )
 
 # Mostrar en Streamlit
-st.plotly_chart(fig2, use_container_width=False)
+st.plotly_chart(fig_alum_os, use_container_width=False)
 
 st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
 
 # Grafico Fechas de finalizacion de autorizaciones
 
-query4 = """
+q_fec_aut = """
     SELECT 
         MONTH(prestacion_fec_aut_OS_hasta) AS mes,
         COUNT(*) AS cantidad_prestaciones
@@ -155,7 +159,7 @@ query4 = """
     ORDER BY mes;
 """
 
-df4 = pd.read_sql(query4, conn)
+df_fec_aut = pd.read_sql(q_fec_aut, conn)
 
 conn.close()
 
@@ -164,10 +168,10 @@ meses = [
     "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
 ]
-df4['mes'] = df4['mes'].apply(lambda x: meses[x - 1])
+df_fec_aut['mes'] = df_fec_aut['mes'].apply(lambda x: meses[x - 1])
 
-fig4 = px.bar(
-    df4,
+fig_fec_aut = px.bar(
+    df_fec_aut,
     x='mes',
     y='cantidad_prestaciones',
     title='Fechas de finalización de autorizaciones',
@@ -175,17 +179,17 @@ fig4 = px.bar(
     text='cantidad_prestaciones'
 )
 
-fig4.update_traces(
-    textangle=0  # Forzar el texto en horizontal
+fig_fec_aut.update_traces(
+    textangle=0.5  # Forzar el texto en horizontal
 )
 
 # Ajustar layout
-fig4.update_layout(
+fig_fec_aut.update_layout(
     title_x=0.3,  # Centra el título
 )
 
 # Mostrar en Streamlit
-#st.plotly_chart(fig4, use_container_width=False)
+#st.plotly_chart(fig_fec_aut, use_container_width=False)
 
 
 
