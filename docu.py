@@ -30,15 +30,44 @@ conn = mysql.connector.connect(
     database=os.getenv("DB_NAME")
 )
 
+# Obtener OS para el filtro
+
+q_os = """ 
+    SELECT o.os_nombre
+    FROM v_os o JOIN v_prestaciones p
+    ON o.os_id = p.prestacion_os
+    WHERE p.prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
+	AND p.prestacion_id > 1
+ """
+
+df_os = pd.read_sql(q_os, conn)
+
+obras_sociales = ['Todas las os'] + list(df_os['os_nombre'].unique())
+
+# Selector en Streamlit
+selected_os = st.selectbox("Seleccione una obra social:", obras_sociales)
+
+# Condición de os en la consulta
+os_condition = ""
+if selected_os != "Todas las os":
+    os_condition = f"AND o.os_nombre = '{selected_os}'"
+
+
 # Tarjetas - cant de alumnos y cant de prestaciones
 
-q_prest_alum = """
+q_prest_alum = f"""
     SELECT 
         COUNT(DISTINCT a.alumno_id) AS cant_alumnos,
         COUNT(DISTINCT p.prestacion_id) AS cant_prestaciones
-    FROM v_alumnos a 
-    JOIN v_prestaciones p ON a.alumno_id = p.alumno_id
-    WHERE p.prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci;
+    FROM 
+        v_os o
+    JOIN 
+        v_prestaciones p ON p.prestacion_os = o.os_id
+    JOIN 
+        v_alumnos a ON p.alumno_id = a.alumno_id
+    WHERE 
+        p.prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
+    {os_condition};
 """
 
 df_prest_alum = pd.read_sql(q_prest_alum, conn)
@@ -73,16 +102,19 @@ with col2:
 
 # Tarjeta - Porcentaje de alumnos autorizados hasta diciembre
 
-q_alum_aut = """
+q_alum_aut = f"""
     SELECT 
         ROUND(
-            (SUM(CASE WHEN MONTH(prestacion_fec_aut_OS_hasta) = 12 THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2
+            (SUM(CASE WHEN MONTH(p.prestacion_fec_aut_OS_hasta) = 12 THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2
         ) AS porcentaje_diciembre
     FROM 
-        v_prestaciones
+        v_prestaciones p
+    JOIN 
+        v_os o ON p.prestacion_os = o.os_id
     WHERE 
         prestacion_estado_descrip = 'ACTIVA' COLLATE utf8mb4_0900_ai_ci
-        AND prestacion_fec_aut_OS_hasta IS NOT NULL;
+        AND prestacion_fec_aut_OS_hasta IS NOT NULL
+        {os_condition};
 """
 
 df_alum_aut = pd.read_sql(q_alum_aut, conn)
@@ -103,14 +135,15 @@ st.markdown(f"""
 
 st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
-# Grafico de barras-cant de alumnos por obra social
+# Grafico de barras-cant de prestaciones por obra social
 
-q_alum_os = """
+q_alum_os = f"""
     SELECT o.os_nombre AS obra_social, COUNT(p.prestacion_id) AS cantidad_prestaciones
     FROM v_prestaciones p JOIN v_os o 
     ON p.prestacion_os = o.os_id
     WHERE prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
-    GROUP BY obra_social
+    {os_condition}
+    GROUP BY obra_social;
 """
 df_alum_os = pd.read_sql(q_alum_os, conn)
 
@@ -146,15 +179,18 @@ st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
 # Grafico Fechas de finalizacion de autorizaciones
 
-q_fec_aut = """
+q_fec_aut = f"""
     SELECT 
-        MONTH(prestacion_fec_aut_OS_hasta) AS mes,
+        MONTH(p.prestacion_fec_aut_OS_hasta) AS mes,
         COUNT(*) AS cantidad_prestaciones
     FROM 
-        v_prestaciones
+        v_prestaciones p
+    JOIN 
+        v_os o ON p.prestacion_os = o.os_id
     WHERE 
-        prestacion_fec_aut_OS_hasta IS NOT NULL
-        AND prestacion_estado_descrip = 'ACTIVA' COLLATE utf8mb4_0900_ai_ci
+        p.prestacion_fec_aut_OS_hasta IS NOT NULL
+        AND p.prestacion_estado_descrip = 'ACTIVA' COLLATE utf8mb4_0900_ai_ci
+        {os_condition}
     GROUP BY mes
     ORDER BY mes;
 """
