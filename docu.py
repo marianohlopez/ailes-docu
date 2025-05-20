@@ -37,7 +37,7 @@ q_os = """
     FROM v_os o JOIN v_prestaciones p
     ON o.os_id = p.prestacion_os
     WHERE p.prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
-	AND p.prestacion_id > 1
+	AND p.prestacion_id >= 1
  """
 
 df_os = pd.read_sql(q_os, conn)
@@ -197,8 +197,6 @@ q_fec_aut = f"""
 
 df_fec_aut = pd.read_sql(q_fec_aut, conn)
 
-conn.close()
-
 # Asignar nombres de meses para una visualización más clara
 meses = [
     "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
@@ -227,6 +225,46 @@ fig_fec_aut.update_layout(
 # Mostrar en Streamlit
 #st.plotly_chart(fig_fec_aut, use_container_width=False)
 
+#st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
+# Grafico de barras con informes de alumnos
 
+q_alumno_inf = """
+    SELECT 
+        i.informecat_nombre AS categoria,
+        COUNT(DISTINCT i.alumno_id) AS cantidad_alumnos
+    FROM 
+        v_informes i JOIN v_prestaciones p
+    ON i.alumno_id = p.alumno_id
+    WHERE 
+        (YEAR(i.fec_carga) = 2025 
+        OR i.informecat_nombre = 'Informe Inicial - ADMISIÓN'
+        OR i.informecat_nombre = 'Otro')
+    AND
+        p.prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
+    GROUP BY 
+        i.informecat_nombre
+    ORDER BY 
+        cantidad_alumnos DESC;
+"""
 
+# Cargar los datos en un DataFrame
+df_alumno_inf = pd.read_sql(q_alumno_inf, conn)
+
+# Crear el gráfico
+fig_alum_inf = px.bar(
+    df_alumno_inf,
+    x='categoria',
+    y='cantidad_alumnos',
+    title='Cantidad de alumnos por informe',
+    labels={'categoria': 'Categoría', 'cantidad_alumnos': 'Cantidad de alumnos'},
+    text='cantidad_alumnos'
+)
+
+# Ajustes del gráfico
+fig_alum_inf.update_xaxes(tickangle=-45)
+fig_alum_inf.update_layout(title_x=0.5)
+
+st.plotly_chart(fig_alum_inf, use_container_width=False)
+
+conn.close()
