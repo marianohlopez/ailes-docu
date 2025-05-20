@@ -227,9 +227,29 @@ fig_fec_aut.update_layout(
 
 #st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
+# Filtro para informes
+
+tipos_informe = ['SAIE', 'MA-APOYO', 'TERAPIAS', 'AT']
+
+col1, col2 = st.columns([7.5, 2.5])
+
+with col2:
+    tipos_seleccionados = st.multiselect(
+        'Selecciona los tipos de prestación:',
+        options=tipos_informe,
+        default=tipos_informe,
+    )
+
+if tipos_seleccionados:
+    filtro_informes = "AND p.prestipo_nombre_corto IN ({})".format(
+        ",".join(f"'{tipo}'" for tipo in tipos_seleccionados)
+    )
+else:
+    filtro_informes = "AND p.prestipo_nombre_corto IN ('')"
+
 # Grafico de barras con informes de alumnos
 
-q_alumno_inf = """
+q_alumno_inf = f"""
     SELECT 
         i.informecat_nombre AS categoria,
         COUNT(DISTINCT i.alumno_id) AS cantidad_alumnos
@@ -242,6 +262,7 @@ q_alumno_inf = """
         OR i.informecat_nombre = 'Otro')
     AND
         p.prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
+    {filtro_informes}
     GROUP BY 
         i.informecat_nombre
     ORDER BY 
@@ -265,6 +286,7 @@ fig_alum_inf = px.bar(
 fig_alum_inf.update_xaxes(tickangle=-45)
 fig_alum_inf.update_layout(title_x=0.5)
 
-st.plotly_chart(fig_alum_inf, use_container_width=False)
+with col1:
+    st.plotly_chart(fig_alum_inf, use_container_width=False)
 
 conn.close()
