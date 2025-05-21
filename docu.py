@@ -55,7 +55,8 @@ if selected_os != "Todas las os":
 
 # Tarjetas - cant de alumnos y cant de prestaciones
 
-q_prest_alum = f"""
+def prest_alum(c1, c2):
+    q_prest_alum = f"""
     SELECT 
         COUNT(DISTINCT a.alumno_id) AS cant_alumnos,
         COUNT(DISTINCT p.prestacion_id) AS cant_prestaciones
@@ -67,14 +68,18 @@ q_prest_alum = f"""
         v_alumnos a ON p.alumno_id = a.alumno_id
     WHERE 
         p.prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
-    {os_condition};
-"""
+    {c1}
+    {c2}
+    """
+    df_prest_alum = pd.read_sql(q_prest_alum, conn)
 
-df_prest_alum = pd.read_sql(q_prest_alum, conn)
+    # Extraer los valores
+    cant_alumnos = df_prest_alum['cant_alumnos'][0]
+    cant_prestaciones = df_prest_alum['cant_prestaciones'][0]
 
-# Extraer los valores
-cant_alumnos = df_prest_alum['cant_alumnos'][0]
-cant_prestaciones = df_prest_alum['cant_prestaciones'][0]
+    return cant_alumnos, cant_prestaciones
+
+cant_alumnos, cant_prestaciones = prest_alum(os_condition, "")
 
 # Mostrar en tarjetas
 col1, col2 = st.columns(2)
@@ -231,10 +236,7 @@ fig_fec_aut.update_layout(
 
 tipos_informe = ['SAIE', 'MA-APOYO', 'TERAPIAS', 'AT']
 
-col1, col2 = st.columns([7.5, 2.5])
-
-with col2:
-    tipos_seleccionados = st.multiselect(
+tipos_seleccionados = st.multiselect(
         'Selecciona los tipos de prestación:',
         options=tipos_informe,
         default=tipos_informe,
@@ -247,6 +249,20 @@ if tipos_seleccionados:
 else:
     filtro_informes = "AND p.prestipo_nombre_corto IN ('')"
 
+col1, col2 = st.columns([8, 2])
+
+cant_alumnos_inf, _ = prest_alum(os_condition, filtro_informes)
+
+with col2:
+    st.markdown(f"""
+    <div class="card-container">
+        <div class="card">
+            <div class="card-title">Cantidad de Alumnos</div>
+            <div class="card-value">{cant_alumnos_inf}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
 # Grafico de barras con informes de alumnos
 
 q_alumno_inf = f"""
@@ -254,8 +270,11 @@ q_alumno_inf = f"""
         i.informecat_nombre AS categoria,
         COUNT(DISTINCT i.alumno_id) AS cantidad_alumnos
     FROM 
-        v_informes i JOIN v_prestaciones p
-    ON i.alumno_id = p.alumno_id
+        v_informes i 
+    JOIN 
+        v_prestaciones p ON i.alumno_id = p.alumno_id
+    JOIN
+        v_os o ON p.prestacion_os = o.os_id
     WHERE 
         (YEAR(i.fec_carga) = 2025 
         OR i.informecat_nombre = 'Informe Inicial - ADMISIÓN'
@@ -263,6 +282,7 @@ q_alumno_inf = f"""
     AND
         p.prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
     {filtro_informes}
+    {os_condition}
     GROUP BY 
         i.informecat_nombre
     ORDER BY 
