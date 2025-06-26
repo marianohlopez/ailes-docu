@@ -79,6 +79,7 @@ def prest_alum(c1, c2):
 
     return cant_alumnos, cant_prestaciones
 
+
 cant_alumnos, cant_prestaciones = prest_alum(os_condition, "")
 
 # Mostrar en tarjetas
@@ -102,7 +103,7 @@ with col2:
             <div class="card-value">{cant_prestaciones}</div>
         </div>
     </div>
-    """, unsafe_allow_html=True)   
+    """, unsafe_allow_html=True)
 
 
 # Tarjeta - Porcentaje de alumnos autorizados hasta diciembre
@@ -173,11 +174,76 @@ fig_alum_os.update_xaxes(
 
 fig_alum_os.update_layout(
     title_x=0.4,  # Centra el título
-    height=600
+    height=600,
+    width=2000,
+    margin=dict(l=40, r=40, t=80, b=120)
 )
 
 # Mostrar en Streamlit
 st.plotly_chart(fig_alum_os, use_container_width=False)
+
+st.markdown("<div class='space'></div>", unsafe_allow_html=True)
+
+# Grafico de linea histórico de activaciones
+
+q_fec_aut = f"""
+SELECT o.os_nombre, p.prestacion_fec_aut_os
+    FROM v_prestaciones p JOIN v_os o 
+    ON p.prestacion_os = o.os_id
+    WHERE prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
+    {os_condition}
+"""
+
+df_fec_aut = pd.read_sql(q_fec_aut, conn)
+
+print(df_fec_aut.columns.tolist())
+print(df_fec_aut.head(3))
+
+
+df_fec_aut["prestacion_fec_aut_OS"] = pd.to_datetime(df_fec_aut["prestacion_fec_aut_OS"])
+
+
+df_fec_aut["year_month"] = df_fec_aut["prestacion_fec_aut_OS"].dt.to_period("M").dt.to_timestamp()
+
+# Conteo de prestaciones por mes
+serie = (
+    df_fec_aut.groupby("year_month", as_index=False)
+      .size()                         
+      .rename(columns={"size": "prestaciones"})
+      .sort_values("year_month")
+)
+
+
+full_range = pd.date_range(
+    serie["year_month"].min(), serie["year_month"].max(), freq="MS"
+)
+serie = (
+    serie.set_index("year_month")
+          .reindex(full_range, fill_value=0)
+          .rename_axis("year_month")
+          .reset_index()
+)
+
+serie["prestaciones_acum"] = serie["prestaciones"].cumsum()
+
+fig = px.line(
+    serie,
+    x="year_month",
+    y="prestaciones_acum",
+    markers=True,               
+    labels={
+        "year_month": "Mes",
+        "prestaciones_acum": "Cantidad de prestaciones activas"
+    },
+    title=f"Histórico - Prestaciones activas por mes 2025"
+)
+
+fig.update_layout(
+    xaxis=dict(dtick="M1", tickformat="%Y-%m"),
+    title_x=0.4
+    )
+
+st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
@@ -204,7 +270,7 @@ df_fec_aut = pd.read_sql(q_fec_aut, conn)
 
 # Asignar nombres de meses para una visualización más clara
 meses = [
-    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
 ]
 df_fec_aut['mes'] = df_fec_aut['mes'].apply(lambda x: meses[x - 1])
@@ -228,19 +294,19 @@ fig_fec_aut.update_layout(
 )
 
 # Mostrar en Streamlit
-#st.plotly_chart(fig_fec_aut, use_container_width=False)
+# st.plotly_chart(fig_fec_aut, use_container_width=False)
 
-#st.markdown("<div class='space'></div>", unsafe_allow_html=True)
+# st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
 # Filtro para informes
 
 tipos_informe = ['SAIE', 'MA-APOYO', 'TERAPIAS', 'AT']
 
 tipos_seleccionados = st.multiselect(
-        'Selecciona los tipos de prestación:',
-        options=tipos_informe,
-        default=tipos_informe,
-    )
+    'Selecciona los tipos de prestación:',
+    options=tipos_informe,
+    default=tipos_informe,
+)
 
 if tipos_seleccionados:
     filtro_informes = "AND p.prestipo_nombre_corto IN ({})".format(
@@ -298,7 +364,8 @@ fig_alum_inf = px.bar(
     x='categoria',
     y='cantidad_alumnos',
     title='Cantidad de alumnos por informe',
-    labels={'categoria': 'Categoría', 'cantidad_alumnos': 'Cantidad de alumnos'},
+    labels={'categoria': 'Categoría',
+            'cantidad_alumnos': 'Cantidad de alumnos'},
     text='cantidad_alumnos'
 )
 
