@@ -59,5 +59,7 @@ st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
 tipos_seleccionados = filtro_informes()
 
+#---Gráfico de informes
+
 chart_sec_inf(os_condition, tipos_seleccionados)
 
