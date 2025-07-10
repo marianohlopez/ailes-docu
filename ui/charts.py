@@ -12,9 +12,9 @@ from data.queries import q_alumno_inf
 
 #--- Grafico de barras-cant de prestaciones por obra social
 
-def chart_prest_os(os_condition):
+def chart_prest_os(os_condition, conn):
 
-  df_alum_os = q_alum_os(os_condition)
+  df_alum_os = q_alum_os(os_condition, conn)
 
   # Gráfico
   fig_alum_os = px.bar(
@@ -44,9 +44,9 @@ def chart_prest_os(os_condition):
 
 #--- Grafico de linea histórico de activaciones
 
-def chart_fec_aut(os_condition):
+def chart_fec_aut(os_condition, conn):
 
-  df_fec_aut = q_fec_aut(os_condition)
+  df_fec_aut = q_fec_aut(os_condition, conn)
 
   # Conteo de prestaciones por mes
   serie = (
@@ -128,7 +128,7 @@ def chart_fin_aut(os_condition):
 
 #--- Sección de informes
 
-def chart_sec_inf(os_condition,tipos_seleccionados):
+def chart_sec_inf(os_condition,tipos_seleccionados, conn):
 
     if tipos_seleccionados:
         filtro_informes = "AND p.prestipo_nombre_corto IN ({})".format(
@@ -139,14 +139,14 @@ def chart_sec_inf(os_condition,tipos_seleccionados):
 
     col1, col2 = st.columns([8, 2])
 
-    cant_alumnos_inf, _ = q_prest_alum(os_condition, filtro_informes)
+    cant_alumnos_inf, _ = q_prest_alum(os_condition, filtro_informes, conn)
 
     with col2:
         card_alumnos_inf(cant_alumnos_inf)
 
     # Grafico de barras con informes de alumnos
 
-    df_alumno_inf = q_alumno_inf(filtro_informes,os_condition)
+    df_alumno_inf = q_alumno_inf(filtro_informes,os_condition, conn)
 
     # Crear el gráfico
     fig_alum_inf = px.bar(

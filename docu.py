@@ -30,22 +30,22 @@ st.title("Reporte de Documentación - Año 2025")
 conn = get_connection()
 
 # Obtener OS para el filtro y mostrar selector de OS
-os_condition = filtro_os()
+os_condition = filtro_os(conn)
 
 #--- Tarjetas - cant de alumnos y cant de prestaciones
-cant_alum_prest(os_condition)
+cant_alum_prest(os_condition, conn)
 
 #--- Tarjeta - Porcentaje de alumnos autorizados hasta diciembre
-porc_alum_dic(os_condition)
+porc_alum_dic(os_condition, conn)
 
 #--- Grafico de barras-cant de prestaciones por obra social
-chart_prest_os(os_condition)
+chart_prest_os(os_condition, conn)
 
 # Espacio
 st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
 # Grafico de linea histórico de activaciones
-chart_fec_aut(os_condition)
+chart_fec_aut(os_condition, conn)
 
 st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
@@ -61,5 +61,5 @@ tipos_seleccionados = filtro_informes()
 
 #---Gráfico de informes
 
-chart_sec_inf(os_condition, tipos_seleccionados)
+chart_sec_inf(os_condition, tipos_seleccionados, conn)
 

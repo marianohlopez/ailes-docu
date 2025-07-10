@@ -3,9 +3,9 @@ from data.queries import q_filter_os
 
 # Filtro selector de OS
 
-def filtro_os():
+def filtro_os(conn):
 
-  df_os = q_filter_os()
+  df_os = q_filter_os(conn)
 
   obras_sociales = ['Todas las os'] + list(df_os['os_nombre'].unique())
 

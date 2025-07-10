@@ -1,9 +1,6 @@
 import pandas as pd
-from .connection import get_connection
 
-conn = get_connection()
-
-def q_filter_os():
+def q_filter_os(conn):
   q_os = """ 
       SELECT o.os_nombre
       FROM v_os o JOIN v_prestaciones p
@@ -16,7 +13,7 @@ def q_filter_os():
 
 # Tarjetas - cant de alumnos y cant de prestaciones
 
-def q_prest_alum(c1, c2):
+def q_prest_alum(c1, c2, conn):
     q_prest_alum = f"""
     SELECT 
         COUNT(DISTINCT a.alumno_id) AS cant_alumnos,
@@ -42,7 +39,7 @@ def q_prest_alum(c1, c2):
 
 
 # Tarjeta - Porcentaje de alumnos autorizados hasta diciembre
-def q_alum_aut(os_condition): 
+def q_alum_aut(os_condition, conn): 
 
   q_alum_aut = f"""
     SELECT 
@@ -66,7 +63,7 @@ def q_alum_aut(os_condition):
 
 # Grafico de barras-cant de prestaciones por obra social
 
-def q_alum_os(os_condition):
+def q_alum_os(os_condition, conn):
 
   q_alum_os = f"""
       SELECT o.os_nombre AS obra_social, COUNT(p.prestacion_id) AS cantidad_prestaciones
@@ -83,7 +80,7 @@ def q_alum_os(os_condition):
 
 # Grafico de barras-cant de prestaciones por obra social
 
-def q_alum_os(os_condition):
+def q_alum_os(os_condition, conn):
   q_alum_os = f"""
       SELECT o.os_nombre AS obra_social, COUNT(p.prestacion_id) AS cantidad_prestaciones
       FROM v_prestaciones p JOIN v_os o 
@@ -99,7 +96,7 @@ def q_alum_os(os_condition):
 
 # Grafico de linea histórico de activaciones
 
-def q_fec_aut(os_condition):
+def q_fec_aut(os_condition, conn):
 
   q_fec_aut = f"""
   SELECT o.os_nombre, p.prestacion_fec_aut_os
@@ -119,7 +116,7 @@ def q_fec_aut(os_condition):
 
 # Grafico Fechas de finalizacion de autorizaciones
 
-def q_fin_aut(os_condition):
+def q_fin_aut(os_condition, conn):
 
   q_fec_aut = f"""
       SELECT 
@@ -139,7 +136,7 @@ def q_fin_aut(os_condition):
 
   return pd.read_sql(q_fec_aut, conn)
 
-def q_alumno_inf(filtro_informes,os_condition):
+def q_alumno_inf(filtro_informes, os_condition, conn):
 
     q_alumno_inf = f"""
             SELECT 
