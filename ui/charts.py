@@ -26,10 +26,6 @@ def chart_prest_os(os_condition, conn):
       text='cantidad_prestaciones'
   )
 
-  fig_alum_os.update_xaxes(
-      tickangle=-45  # Forzar el texto en horizontal
-  )
-
   # Ajustar layout
   fig_alum_os.update_layout(
       title_x=0.4,  # Centra el título
