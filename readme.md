@@ -33,3 +33,6 @@ Este proyecto es un **tablero interactivo en Streamlit** que permite monitorear 
 ---
 
 ## 📸 Capturas de pantalla
+
+![Sin título](https://github.com/user-attachments/assets/59ef8135-20ae-4212-9edc-9a85390d0b6f)
+![Sin título2](https://github.com/user-attachments/assets/21cf42f1-93c0-4fae-b701-13d04568dd34)
