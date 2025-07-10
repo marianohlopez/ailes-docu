@@ -1,6 +1,6 @@
 import streamlit as st
 from dotenv import load_dotenv
-from data.connection import get_connection_creator
+from data.connection import get_connection
 from logic.filters import filtro_os
 from logic.filters import filtro_informes
 from ui.cards import cant_alum_prest
@@ -26,11 +26,8 @@ st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
 st.title("Reporte de Documentación - Año 2025")
 
-# get función que devuelve conexiones frescas
-get_conn = get_connection_creator()
-
-# crear conexión viva en cada ejecución
-conn = get_conn()
+# crear conexión
+conn = get_connection()
 
 # Obtener OS para el filtro y mostrar selector de OS
 os_condition = filtro_os(conn)
@@ -65,4 +62,6 @@ tipos_seleccionados = filtro_informes()
 #---Gráfico de informes
 
 chart_sec_inf(os_condition, tipos_seleccionados, conn)
+
+conn.close()
 
