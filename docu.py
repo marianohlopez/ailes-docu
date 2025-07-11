@@ -63,5 +63,3 @@ tipos_seleccionados = filtro_informes()
 
 chart_sec_inf(os_condition, tipos_seleccionados, conn)
 
-# conn.close()
-
