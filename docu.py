@@ -64,11 +64,3 @@ tipos_seleccionados = filtro_informes()
 
 chart_sec_inf(os_condition, tipos_seleccionados, conn)
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8501))
-    st._is_running_with_streamlit = True 
-    from streamlit.web import cli as stcli
-    import sys
-    sys.argv = ["streamlit", "run", "docu.py", "--server.port", str(port)]
-    sys.exit(stcli.main())
-
