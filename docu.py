@@ -3,7 +3,7 @@ import streamlit as st
 from dotenv import load_dotenv
 from data.connection import get_connection
 from logic.filters import filtro_os
-from logic.filters import filtro_informes
+from logic.filters import filtro_tipos
 from ui.cards import cant_alum_prest
 from ui.cards import porc_alum_dic
 from ui.charts import chart_prest_os
@@ -33,20 +33,23 @@ conn = get_connection()
 # Obtener OS para el filtro y mostrar selector de OS
 os_condition = filtro_os(conn)
 
+# filtro de tipos de prestaciones
+tipos_seleccionados = filtro_tipos()
+
 #--- Tarjetas - cant de alumnos y cant de prestaciones
-cant_alum_prest(os_condition, conn)
+cant_alum_prest(tipos_seleccionados, os_condition, conn)
 
 #--- Tarjeta - Porcentaje de alumnos autorizados hasta diciembre
-porc_alum_dic(os_condition, conn)
+porc_alum_dic(tipos_seleccionados, os_condition, conn)
 
 #--- Grafico de barras-cant de prestaciones por obra social
-chart_prest_os(os_condition, conn)
+chart_prest_os(tipos_seleccionados, os_condition, conn)
 
 # Espacio
 st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
 # Grafico de linea histórico de activaciones
-chart_fec_aut(os_condition, conn)
+chart_fec_aut(tipos_seleccionados, os_condition, conn)
 
 st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
@@ -58,7 +61,7 @@ st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
 #---Filtro de informes
 
-tipos_seleccionados = filtro_informes()
+
 
 #---Gráfico de informes
 

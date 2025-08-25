@@ -39,7 +39,7 @@ def q_prest_alum(c1, c2, conn):
 
 
 # Tarjeta - Porcentaje de alumnos autorizados hasta diciembre
-def q_alum_aut(os_condition, conn): 
+def q_alum_aut(os_condition, filtro_tipos, conn): 
 
   q_alum_aut = f"""
     SELECT 
@@ -53,6 +53,7 @@ def q_alum_aut(os_condition, conn):
     WHERE 
         prestacion_estado_descrip = 'ACTIVA' COLLATE utf8mb4_0900_ai_ci
         AND prestacion_fec_aut_OS_hasta IS NOT NULL
+        {filtro_tipos}
         {os_condition};
 """
 
@@ -80,12 +81,13 @@ def q_alum_os(os_condition, conn):
 
 # Grafico de barras-cant de prestaciones por obra social
 
-def q_alum_os(os_condition, conn):
+def q_alum_os(os_condition, filtro_tipos, conn):
   q_alum_os = f"""
       SELECT o.os_nombre AS obra_social, COUNT(p.prestacion_id) AS cantidad_prestaciones
       FROM v_prestaciones p JOIN v_os o 
       ON p.prestacion_os = o.os_id
       WHERE prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
+      {filtro_tipos}
       {os_condition}
       GROUP BY obra_social;
   """
@@ -96,13 +98,14 @@ def q_alum_os(os_condition, conn):
 
 # Grafico de linea histórico de activaciones
 
-def q_fec_aut(os_condition, conn):
+def q_fec_aut(filtro_tipos, os_condition, conn):
 
   q_fec_aut = f"""
   SELECT o.os_nombre, p.prestacion_fec_aut_os
       FROM v_prestaciones p JOIN v_os o 
       ON p.prestacion_os = o.os_id
       WHERE prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
+      {filtro_tipos}
       {os_condition}
   """
 
@@ -136,7 +139,7 @@ def q_fin_aut(os_condition, conn):
 
   return pd.read_sql(q_fec_aut, conn)
 
-def q_alumno_inf(filtro_informes, os_condition, conn):
+def q_alumno_inf(filtro_tipos, os_condition, conn):
 
     q_alumno_inf = f"""
             SELECT 
@@ -154,7 +157,7 @@ def q_alumno_inf(filtro_informes, os_condition, conn):
                 OR i.informecat_nombre = 'Otro')
             AND
                 p.prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
-            {filtro_informes}
+            {filtro_tipos}
             {os_condition}
             GROUP BY 
                 i.informecat_nombre

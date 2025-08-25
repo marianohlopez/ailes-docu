@@ -12,9 +12,16 @@ from data.queries import q_alumno_inf
 
 #--- Grafico de barras-cant de prestaciones por obra social
 
-def chart_prest_os(os_condition, conn):
+def chart_prest_os(tipos_seleccionados, os_condition, conn):
+  
+  if tipos_seleccionados:
+      filtro_tipos = "AND p.prestipo_nombre_corto IN ({})".format(
+              ",".join(f"'{tipo}'" for tipo in tipos_seleccionados)
+          )
+  else:
+      filtro_tipos = "AND p.prestipo_nombre_corto IN ('')"
 
-  df_alum_os = q_alum_os(os_condition, conn)
+  df_alum_os = q_alum_os(os_condition, filtro_tipos, conn)
 
   # Gráfico
   fig_alum_os = px.bar(
@@ -40,52 +47,60 @@ def chart_prest_os(os_condition, conn):
 
 #--- Grafico de linea histórico de activaciones
 
-def chart_fec_aut(os_condition, conn):
+def chart_fec_aut(tipos_seleccionados, os_condition, conn):
+  
+    if tipos_seleccionados:
+        filtro_tipos = "AND p.prestipo_nombre_corto IN ({})".format(
+                ",".join(f"'{tipo}'" for tipo in tipos_seleccionados)
+            )
+    else:
+        filtro_tipos = "AND p.prestipo_nombre_corto IN ('')"
+  
 
-  df_fec_aut = q_fec_aut(os_condition, conn)
+    df_fec_aut = q_fec_aut(filtro_tipos, os_condition, conn)
 
-  # Conteo de prestaciones por mes
-  serie = (
-      df_fec_aut.groupby("year_month", as_index=False)
-        .size()                         
-        .rename(columns={"size": "prestaciones"})
-        .sort_values("year_month")
+    # Conteo de prestaciones por mes
+    serie = (
+        df_fec_aut.groupby("year_month", as_index=False)
+            .size()                         
+            .rename(columns={"size": "prestaciones"})
+            .sort_values("year_month")
+    )
+
+    today = pd.Timestamp(datetime.today().replace(day=1))
+    max_fecha = max(serie["year_month"].max(), today)
+
+    full_range = pd.date_range(
+        serie["year_month"].min(), max_fecha, freq="MS"
   )
 
-  today = pd.Timestamp(datetime.today().replace(day=1))
-  max_fecha = max(serie["year_month"].max(), today)
+    serie = (
+        serie.set_index("year_month")
+                .reindex(full_range, fill_value=0)
+                .rename_axis("year_month")
+                .reset_index()
+    )
 
-  full_range = pd.date_range(
-      serie["year_month"].min(), max_fecha, freq="MS"
+    serie["prestaciones_acum"] = serie["prestaciones"].cumsum()
+
+    fig = px.line(
+        serie,
+        x="year_month",
+        y="prestaciones_acum",
+        markers=True,               
+        labels={
+            "year_month": "Mes",
+            "prestaciones_acum": "Cantidad de prestaciones activas"
+        },
+        title=f"Histórico - Prestaciones activas por mes 2025"
   )
 
-  serie = (
-      serie.set_index("year_month")
-            .reindex(full_range, fill_value=0)
-            .rename_axis("year_month")
-            .reset_index()
-  )
+    fig.update_layout(
+        xaxis=dict(dtick="M1", tickformat="%Y-%m"),
+        title_x=0.4
+        )
 
-  serie["prestaciones_acum"] = serie["prestaciones"].cumsum()
-
-  fig = px.line(
-      serie,
-      x="year_month",
-      y="prestaciones_acum",
-      markers=True,               
-      labels={
-          "year_month": "Mes",
-          "prestaciones_acum": "Cantidad de prestaciones activas"
-      },
-      title=f"Histórico - Prestaciones activas por mes 2025"
-  )
-
-  fig.update_layout(
-      xaxis=dict(dtick="M1", tickformat="%Y-%m"),
-      title_x=0.4
-      )
-
-  st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True)
 
 # Grafico Fechas de finalizacion de autorizaciones
 
@@ -127,22 +142,22 @@ def chart_fin_aut(os_condition):
 def chart_sec_inf(os_condition,tipos_seleccionados, conn):
 
     if tipos_seleccionados:
-        filtro_informes = "AND p.prestipo_nombre_corto IN ({})".format(
+        filtro_tipos = "AND p.prestipo_nombre_corto IN ({})".format(
                 ",".join(f"'{tipo}'" for tipo in tipos_seleccionados)
             )
     else:
-        filtro_informes = "AND p.prestipo_nombre_corto IN ('')"
+        filtro_tipos = "AND p.prestipo_nombre_corto IN ('')"
 
     col1, col2 = st.columns([8, 2])
 
-    cant_alumnos_inf, _ = q_prest_alum(os_condition, filtro_informes, conn)
+    cant_alumnos_inf, _ = q_prest_alum(os_condition, filtro_tipos, conn)
 
     with col2:
         card_alumnos_inf(cant_alumnos_inf)
 
     # Grafico de barras con informes de alumnos
 
-    df_alumno_inf = q_alumno_inf(filtro_informes,os_condition, conn)
+    df_alumno_inf = q_alumno_inf(filtro_tipos, os_condition, conn)
 
     # Crear el gráfico
     fig_alum_inf = px.bar(

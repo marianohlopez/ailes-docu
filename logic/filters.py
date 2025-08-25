@@ -21,7 +21,7 @@ def filtro_os(conn):
 
 #--- Filtro para informes
 
-def filtro_informes():
+def filtro_tipos():
 
   tipos_informe = ['SAIE', 'MA-APOYO', 'TERAPIAS', 'AT']
 
