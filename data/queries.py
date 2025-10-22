@@ -105,6 +105,7 @@ def q_fec_aut(filtro_tipos, os_condition, conn):
       FROM v_prestaciones p JOIN v_os o 
       ON p.prestacion_os = o.os_id
       WHERE prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
+      AND p.prestacion_id NOT IN (521,1950)
       {filtro_tipos}
       {os_condition}
   """
