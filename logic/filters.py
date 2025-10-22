@@ -32,3 +32,15 @@ def filtro_tipos():
   )
 
   return tipos_seleccionados
+
+
+# Filtro de Año
+
+def year_filter(year):
+
+  # Condición de año en la consulta
+  year_condition = ""
+  if year != "":
+      year_condition = f"AND prestacion_anio = {year}"
+
+  return year_condition

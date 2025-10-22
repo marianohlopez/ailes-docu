@@ -6,7 +6,8 @@ def q_filter_os(conn):
       FROM v_os o JOIN v_prestaciones p
       ON o.os_id = p.prestacion_os
       WHERE p.prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
-    AND p.prestacion_id >= 1
+      AND p.prestacion_id >= 1
+      AND p.alumno_apellido != "Machado (Prueba)"
   """
 
   return pd.read_sql(q_os, conn)
@@ -26,6 +27,8 @@ def q_prest_alum(c1, c2, conn):
         v_alumnos a ON p.alumno_id = a.alumno_id
     WHERE 
         p.prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
+        AND p.prestacion_id NOT IN (521,1950)
+        AND p.alumno_apellido != "Machado (Prueba)"
     {c1}
     {c2}
     """
@@ -53,6 +56,7 @@ def q_alum_aut(os_condition, filtro_tipos, conn):
     WHERE 
         prestacion_estado_descrip = 'ACTIVA' COLLATE utf8mb4_0900_ai_ci
         AND prestacion_fec_aut_OS_hasta IS NOT NULL
+        AND p.alumno_apellido != "Machado (Prueba)"
         {filtro_tipos}
         {os_condition};
 """
@@ -71,6 +75,7 @@ def q_alum_os(os_condition, conn):
       FROM v_prestaciones p JOIN v_os o 
       ON p.prestacion_os = o.os_id
       WHERE prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
+      AND p.alumno_apellido != "Machado (Prueba)"
       {os_condition}
       GROUP BY obra_social;
   """
@@ -87,6 +92,7 @@ def q_alum_os(os_condition, filtro_tipos, conn):
       FROM v_prestaciones p JOIN v_os o 
       ON p.prestacion_os = o.os_id
       WHERE prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
+      AND p.alumno_apellido != "Machado (Prueba)"
       {filtro_tipos}
       {os_condition}
       GROUP BY obra_social;
@@ -98,25 +104,52 @@ def q_alum_os(os_condition, filtro_tipos, conn):
 
 # Grafico de linea histórico de activaciones
 
-def q_fec_aut(filtro_tipos, os_condition, conn):
+def q_fec_aut(year_condition, filtro_tipos, os_condition, conn):
+   
+    q_altas_bajas = f"""
+        SELECT 
+            periodo,
+            SUM(cant_altas) AS cant_altas,
+            SUM(cant_bajas) AS cant_bajas
+        FROM (
+            SELECT 
+                DATE_FORMAT(prestacion_fec_pase_activo, '%%Y-%%m') AS periodo,
+                COUNT(*) AS cant_altas,
+                0 AS cant_bajas
+            FROM v_prestaciones p
+			JOIN v_os o 
+            ON p.prestacion_os = o.os_id
+            WHERE prestacion_fec_pase_activo IS NOT NULL
+            {year_condition}
+            AND p.alumno_apellido != "Machado (Prueba)"
+            {filtro_tipos}
+            {os_condition}
+            GROUP BY DATE_FORMAT(prestacion_fec_pase_activo, '%%Y-%%m')
+            
+            UNION ALL
+            
+            SELECT 
+                DATE_FORMAT(prestacion_fec_baja, '%%Y-%%m') AS periodo,
+                0 AS cant_altas,
+                COUNT(*) AS cant_bajas
+            FROM v_prestaciones p
+			JOIN v_os o 
+            ON p.prestacion_os = o.os_id
+            WHERE prestacion_fec_baja IS NOT NULL
+            AND prestacion_fec_pase_activo IS NOT NULL
+            {year_condition}
+            AND p.alumno_apellido != "Machado (Prueba)"
+            {filtro_tipos}
+            {os_condition}
+            GROUP BY DATE_FORMAT(prestacion_fec_baja, '%%Y-%%m')
+        ) t
+        GROUP BY periodo
+        ORDER BY periodo;
+    """
+   
+    df_altas_bajas = pd.read_sql(q_altas_bajas, conn)
 
-  q_fec_aut = f"""
-  SELECT o.os_nombre, p.prestacion_fec_aut_os
-      FROM v_prestaciones p JOIN v_os o 
-      ON p.prestacion_os = o.os_id
-      WHERE prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
-      AND p.prestacion_id NOT IN (521,1950)
-      {filtro_tipos}
-      {os_condition}
-  """
-
-  df_fec_aut = pd.read_sql(q_fec_aut, conn)
-
-  df_fec_aut["prestacion_fec_aut_OS"] = pd.to_datetime(df_fec_aut["prestacion_fec_aut_OS"])
-
-  df_fec_aut["year_month"] = df_fec_aut["prestacion_fec_aut_OS"].dt.to_period("M").dt.to_timestamp()
-
-  return df_fec_aut
+    return df_altas_bajas
 
 # Grafico Fechas de finalizacion de autorizaciones
 
@@ -133,6 +166,7 @@ def q_fin_aut(os_condition, conn):
       WHERE 
           p.prestacion_fec_aut_OS_hasta IS NOT NULL
           AND p.prestacion_estado_descrip = 'ACTIVA' COLLATE utf8mb4_0900_ai_ci
+          AND p.alumno_apellido != "Machado (Prueba)"
           {os_condition}
       GROUP BY mes
       ORDER BY mes;
@@ -158,6 +192,7 @@ def q_alumno_inf(filtro_tipos, os_condition, conn):
                 OR i.informecat_nombre = 'Otro')
             AND
                 p.prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
+            AND p.alumno_apellido != "Machado (Prueba)"
             {filtro_tipos}
             {os_condition}
             GROUP BY 

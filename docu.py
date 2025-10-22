@@ -1,9 +1,7 @@
-import os
 import streamlit as st
 from dotenv import load_dotenv
 from data.connection import get_connection
-from logic.filters import filtro_os
-from logic.filters import filtro_tipos
+from logic.filters import filtro_os, filtro_tipos, year_filter
 from ui.cards import cant_alum_prest
 from ui.cards import porc_alum_dic
 from ui.charts import chart_prest_os
@@ -48,8 +46,15 @@ chart_prest_os(tipos_seleccionados, os_condition, conn)
 # Espacio
 st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
+#--- Filtro de Año
+
+year = st.selectbox("Seleccione el año", ["2025", "2024"])
+
+# Condición de año para la consulta
+year_condition = year_filter(year)
+
 # Grafico de linea histórico de activaciones
-chart_fec_aut(tipos_seleccionados, os_condition, conn)
+chart_fec_aut(year_condition, tipos_seleccionados, os_condition, conn)
 
 st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 

@@ -47,7 +47,7 @@ def chart_prest_os(tipos_seleccionados, os_condition, conn):
 
 #--- Grafico de linea histórico de activaciones
 
-def chart_fec_aut(tipos_seleccionados, os_condition, conn):
+def chart_fec_aut(year_condition, tipos_seleccionados, os_condition, conn):
   
     if tipos_seleccionados:
         filtro_tipos = "AND p.prestipo_nombre_corto IN ({})".format(
@@ -57,50 +57,56 @@ def chart_fec_aut(tipos_seleccionados, os_condition, conn):
         filtro_tipos = "AND p.prestipo_nombre_corto IN ('')"
   
 
-    df_fec_aut = q_fec_aut(filtro_tipos, os_condition, conn)
+    df = q_fec_aut(year_condition, filtro_tipos, os_condition, conn)
 
-    # Conteo de prestaciones por mes
-    serie = (
-        df_fec_aut.groupby("year_month", as_index=False)
-            .size()                         
-            .rename(columns={"size": "prestaciones"})
-            .sort_values("year_month")
-    )
+    initial_balance = 0
 
-    today = pd.Timestamp(datetime.today().replace(day=1))
-    max_fecha = max(serie["year_month"].max(), today)
-
-    full_range = pd.date_range(
-        serie["year_month"].min(), max_fecha, freq="MS"
-  )
-
-    serie = (
-        serie.set_index("year_month")
-                .reindex(full_range, fill_value=0)
-                .rename_axis("year_month")
-                .reset_index()
-    )
-
-    serie["prestaciones_acum"] = serie["prestaciones"].cumsum()
+    # acumulados
+    df["bajas_acum"] = df["cant_bajas"].cumsum()
+    df["altas_acum"] = initial_balance + (df["cant_altas"] - df["cant_bajas"]).cumsum()
 
     fig = px.line(
-        serie,
-        x="year_month",
-        y="prestaciones_acum",
-        markers=True,               
+        df,
+        x="periodo",
+        y=["bajas_acum", "altas_acum"],
+        title="Evolución de altas y bajas",
         labels={
-            "year_month": "Mes",
-            "prestaciones_acum": "Cantidad de prestaciones activas"
+            "value": "Cantidad acumulada",
+            "periodo": "Periodo",
+            "altas_acum": "Altas (acum)",
+            "bajas_acum": "Bajas (acum)",
         },
-        title=f"Histórico - Prestaciones activas por mes 2025"
-  )
+        color_discrete_map={
+            "altas_acum": "green",
+            "bajas_acum": "red",
+        },
+        markers=True,
+        custom_data=["cant_altas", "cant_bajas"]
+    )
 
+    # hovertemplate para mostrar custom_data
+    fig.update_traces(
+        hovertemplate=
+        "Periodo: %{x}<br>" +
+        "Cantidad acumulada: %{y}<br>" +
+        "Altas del mes: %{customdata[0]}<br>" +
+        "Bajas del mes: %{customdata[1]}"
+    )
+
+    # layout
     fig.update_layout(
-        xaxis=dict(dtick="M1", tickformat="%Y-%m"),
-        title_x=0.4
-        )
+        xaxis_title="Periodo",
+        yaxis_title="Cantidad acumulada",
+        legend_title="Serie",
+        title_x=0.5,
+        height=420
+    )
 
+    fig.update_xaxes(type="category")
+
+    # mostrar en Streamlit
     st.plotly_chart(fig, use_container_width=True)
+
 
 # Grafico Fechas de finalizacion de autorizaciones
 
