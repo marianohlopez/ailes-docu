@@ -48,7 +48,7 @@ st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
 #--- Filtro de Año
 
-year = st.selectbox("Seleccione el año", ["2025", "2024"])
+year = st.selectbox("Seleccione el año", ["2025", "2026", "2024"])
 
 # Condición de año para la consulta
 year_condition = year_filter(year)

@@ -27,6 +27,7 @@ def q_prest_alum(c1, c2, conn):
         v_alumnos a ON p.alumno_id = a.alumno_id
     WHERE 
         p.prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
+        AND prestacion_anio = 2025
         AND p.prestacion_id NOT IN (521,1950)
         AND p.alumno_apellido != "Machado (Prueba)"
     {c1}
@@ -55,6 +56,7 @@ def q_alum_aut(os_condition, filtro_tipos, conn):
         v_os o ON p.prestacion_os = o.os_id
     WHERE 
         prestacion_estado_descrip = 'ACTIVA' COLLATE utf8mb4_0900_ai_ci
+        AND prestacion_anio = 2025
         AND prestacion_fec_aut_OS_hasta IS NOT NULL
         AND p.alumno_apellido != "Machado (Prueba)"
         {filtro_tipos}
@@ -68,30 +70,13 @@ def q_alum_aut(os_condition, filtro_tipos, conn):
 
 # Grafico de barras-cant de prestaciones por obra social
 
-def q_alum_os(os_condition, conn):
-
-  q_alum_os = f"""
-      SELECT o.os_nombre AS obra_social, COUNT(p.prestacion_id) AS cantidad_prestaciones
-      FROM v_prestaciones p JOIN v_os o 
-      ON p.prestacion_os = o.os_id
-      WHERE prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
-      AND p.alumno_apellido != "Machado (Prueba)"
-      {os_condition}
-      GROUP BY obra_social;
-  """
-  df_alum_os = pd.read_sql(q_alum_os, conn)
-
-  # Asegurar orden correcto
-  return df_alum_os.sort_values('cantidad_prestaciones', ascending=False)
-
-# Grafico de barras-cant de prestaciones por obra social
-
 def q_alum_os(os_condition, filtro_tipos, conn):
   q_alum_os = f"""
       SELECT o.os_nombre AS obra_social, COUNT(p.prestacion_id) AS cantidad_prestaciones
       FROM v_prestaciones p JOIN v_os o 
       ON p.prestacion_os = o.os_id
       WHERE prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
+      AND prestacion_anio = 2025
       AND p.alumno_apellido != "Machado (Prueba)"
       {filtro_tipos}
       {os_condition}
@@ -174,6 +159,8 @@ def q_fin_aut(os_condition, conn):
 
   return pd.read_sql(q_fec_aut, conn)
 
+# Informes por alumno
+
 def q_alumno_inf(filtro_tipos, os_condition, conn):
 
     q_alumno_inf = f"""
@@ -190,8 +177,8 @@ def q_alumno_inf(filtro_tipos, os_condition, conn):
                 (YEAR(i.fec_carga) = 2025 
                 OR i.informecat_nombre = 'Informe Inicial - ADMISIÓN'
                 OR i.informecat_nombre = 'Otro')
-            AND
-                p.prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
+            AND p.prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
+            AND prestacion_anio = 2025
             AND p.alumno_apellido != "Machado (Prueba)"
             {filtro_tipos}
             {os_condition}
