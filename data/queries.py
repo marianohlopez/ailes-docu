@@ -2,12 +2,15 @@ import pandas as pd
 
 def q_filter_os(conn):
   q_os = """ 
-      SELECT o.os_nombre
-      FROM v_os o JOIN v_prestaciones p
-      ON o.os_id = p.prestacion_os
-      WHERE p.prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
-      AND p.prestacion_id >= 1
-      AND p.alumno_apellido != "Machado (Prueba)"
+      SELECT 
+        o.os_nombre
+      FROM v_os o 
+      JOIN v_prestaciones p
+        ON o.os_id = p.prestacion_os
+      WHERE 
+        p.prestacion_estado = 1
+        AND p.prestacion_id >= 1
+        AND p.prestacion_alumno != 522
   """
 
   return pd.read_sql(q_os, conn)
@@ -17,19 +20,18 @@ def q_filter_os(conn):
 def q_prest_alum(c1, c2, conn):
     q_prest_alum = f"""
     SELECT 
-        COUNT(DISTINCT a.alumno_id) AS cant_alumnos,
-        COUNT(DISTINCT p.prestacion_id) AS cant_prestaciones
-    FROM 
-        v_os o
+      COUNT(DISTINCT a.alumno_id) AS cant_alumnos,
+      COUNT(DISTINCT p.prestacion_id) AS cant_prestaciones
+    FROM v_os o 
+    JOIN v_prestaciones p 
+      ON p.prestacion_os = o.os_id
     JOIN 
-        v_prestaciones p ON p.prestacion_os = o.os_id
-    JOIN 
-        v_alumnos a ON p.alumno_id = a.alumno_id
+      v_alumnos a ON p.alumno_id = a.alumno_id
     WHERE 
-        p.prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
-        AND prestacion_anio = 2025
-        AND p.prestacion_id NOT IN (521,1950)
-        AND p.alumno_apellido != "Machado (Prueba)"
+      p.prestacion_estado = 1
+      AND prestacion_anio = 2026
+      AND p.prestacion_id NOT IN (521,1950)
+      AND p.prestacion_alumno != 522
     {c1}
     {c2}
     """
@@ -51,14 +53,13 @@ def q_alum_aut(os_condition, filtro_tipos, conn):
             (SUM(CASE WHEN MONTH(p.prestacion_fec_aut_OS_hasta) = 12 THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2
         ) AS porcentaje_diciembre
     FROM 
-        v_prestaciones p
-    JOIN 
-        v_os o ON p.prestacion_os = o.os_id
+        v_prestaciones p JOIN v_os o 
+        ON p.prestacion_os = o.os_id
     WHERE 
-        prestacion_estado_descrip = 'ACTIVA' COLLATE utf8mb4_0900_ai_ci
-        AND prestacion_anio = 2025
+        prestacion_estado = 1
+        AND prestacion_anio = 2026
         AND prestacion_fec_aut_OS_hasta IS NOT NULL
-        AND p.alumno_apellido != "Machado (Prueba)"
+        AND p.prestacion_alumno != 522
         {filtro_tipos}
         {os_condition};
 """
@@ -72,14 +73,17 @@ def q_alum_aut(os_condition, filtro_tipos, conn):
 
 def q_alum_os(os_condition, filtro_tipos, conn):
   q_alum_os = f"""
-      SELECT o.os_nombre AS obra_social, COUNT(p.prestacion_id) AS cantidad_prestaciones
-      FROM v_prestaciones p JOIN v_os o 
-      ON p.prestacion_os = o.os_id
-      WHERE prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
-      AND prestacion_anio = 2025
-      AND p.alumno_apellido != "Machado (Prueba)"
-      {filtro_tipos}
-      {os_condition}
+      SELECT 
+        o.os_nombre AS obra_social, COUNT(p.prestacion_id) AS cantidad_prestaciones
+      FROM v_prestaciones p 
+      JOIN v_os o 
+        ON p.prestacion_os = o.os_id
+      WHERE 
+        prestacion_estado = 1
+        AND prestacion_anio = 2026
+        AND p.prestacion_alumno != 522
+        {filtro_tipos}
+        {os_condition}
       GROUP BY obra_social;
   """
   df_alum_os = pd.read_sql(q_alum_os, conn)
@@ -106,7 +110,7 @@ def q_fec_aut(year_condition, filtro_tipos, os_condition, conn):
             ON p.prestacion_os = o.os_id
             WHERE prestacion_fec_pase_activo IS NOT NULL
             {year_condition}
-            AND p.alumno_apellido != "Machado (Prueba)"
+            AND p.prestacion_alumno != 522
             {filtro_tipos}
             {os_condition}
             GROUP BY DATE_FORMAT(prestacion_fec_pase_activo, '%%Y-%%m')
@@ -123,7 +127,7 @@ def q_fec_aut(year_condition, filtro_tipos, os_condition, conn):
             WHERE prestacion_fec_baja IS NOT NULL
             AND prestacion_fec_pase_activo IS NOT NULL
             {year_condition}
-            AND p.alumno_apellido != "Machado (Prueba)"
+            AND p.prestacion_alumno != 522
             {filtro_tipos}
             {os_condition}
             GROUP BY DATE_FORMAT(prestacion_fec_baja, '%%Y-%%m')
@@ -150,8 +154,8 @@ def q_fin_aut(os_condition, conn):
           v_os o ON p.prestacion_os = o.os_id
       WHERE 
           p.prestacion_fec_aut_OS_hasta IS NOT NULL
-          AND p.prestacion_estado_descrip = 'ACTIVA' COLLATE utf8mb4_0900_ai_ci
-          AND p.alumno_apellido != "Machado (Prueba)"
+          AND p.prestacion_estado = 1
+          AND p.prestacion_alumno != 522
           {os_condition}
       GROUP BY mes
       ORDER BY mes;
@@ -174,12 +178,12 @@ def q_alumno_inf(filtro_tipos, os_condition, conn):
             JOIN
                 v_os o ON p.prestacion_os = o.os_id
             WHERE 
-                (YEAR(i.fec_carga) = 2025 
+                (YEAR(i.fec_carga) = 2026 
                 OR i.informecat_nombre = 'Informe Inicial - ADMISIÓN'
                 OR i.informecat_nombre = 'Otro')
-            AND p.prestacion_estado_descrip = "ACTIVA" COLLATE utf8mb4_0900_ai_ci
-            AND prestacion_anio = 2025
-            AND p.alumno_apellido != "Machado (Prueba)"
+            AND p.prestacion_estado = 1
+            AND prestacion_anio = 2026
+            AND p.prestacion_alumno != 522
             {filtro_tipos}
             {os_condition}
             GROUP BY 

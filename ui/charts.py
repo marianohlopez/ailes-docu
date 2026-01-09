@@ -110,9 +110,9 @@ def chart_fec_aut(year_condition, tipos_seleccionados, os_condition, conn):
 
 # Grafico Fechas de finalizacion de autorizaciones
 
-def chart_fin_aut(os_condition):   
+def chart_fin_aut(conn, os_condition):   
 
-  df_fec_aut = q_fin_aut(os_condition)
+  df_fec_aut = q_fin_aut(os_condition, conn)
 
   # Asignar nombres de meses para una visualización más clara
   meses = [
@@ -170,7 +170,7 @@ def chart_sec_inf(os_condition,tipos_seleccionados, conn):
         df_alumno_inf,
         x='categoria',
         y='cantidad_alumnos',
-        title='Cantidad de alumnos por informe',
+        title='Cantidad de informes',
         labels={'categoria': 'Categoría',
                 'cantidad_alumnos': 'Cantidad de alumnos'},
         text='cantidad_alumnos'

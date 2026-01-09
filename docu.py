@@ -23,7 +23,7 @@ css = open("styles.css").read()
 
 st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
-st.title("Reporte de Documentación - Año 2025")
+st.title("Indicadores de Documentación - Año 2026")
 
 # crear conexión
 conn = get_connection()
@@ -48,7 +48,7 @@ st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
 #--- Filtro de Año
 
-year = st.selectbox("Seleccione el año", ["2025", "2026", "2024"])
+year = st.selectbox("Seleccione el año", ["2026", "2025", "2024"])
 
 # Condición de año para la consulta
 year_condition = year_filter(year)
@@ -60,7 +60,7 @@ st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
 #--- Grafico Fechas de finalizacion de autorizaciones
 
-#chart_fin_aut(os_condition)
+#chart_fin_aut(conn, os_condition)
 
 # st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
