@@ -174,13 +174,12 @@ def q_alumno_inf(filtro_tipos, os_condition, conn):
             FROM 
                 v_informes i 
             JOIN 
-                v_prestaciones p ON i.alumno_id = p.alumno_id
+                v_prestaciones p ON i.alumno_id = p.prestacion_alumno
             JOIN
                 v_os o ON p.prestacion_os = o.os_id
             WHERE 
                 (YEAR(i.fec_carga) = 2026 
-                OR i.informecat_nombre = 'Informe Inicial - ADMISIÓN'
-                OR i.informecat_nombre = 'Otro')
+                OR i.informecat_nombre = 'Informe Inicial - ADMISIÓN')
             AND p.prestacion_estado = 1
             AND prestacion_anio = 2026
             AND p.prestacion_alumno != 522
