@@ -1,6 +1,7 @@
 import streamlit as st
 from dotenv import load_dotenv
 from data.connection import get_connection
+from data.mongo_db import register
 from logic.filters import filtro_os, filtro_tipos, year_filter
 from ui.cards import cant_alum_prest
 from ui.cards import porc_alum_dic
@@ -22,6 +23,9 @@ st.set_page_config(
 css = open("styles.css").read()
 
 st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+
+# Registrar visita una sola vez por día
+register(st)
 
 st.title("Indicadores de Documentación - Año 2026")
 
