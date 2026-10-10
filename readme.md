@@ -2,8 +2,6 @@
 
 Este proyecto es un **tablero interactivo en Streamlit** que permite monitorear en tiempo real la documentación de prestaciones escolares durante el año 2025. Incluye métricas clave, filtros dinámicos y visualizaciones que facilitan la toma de decisiones en el área de Inclusión Escolar.
 
-## Deployment: https://ailes-documentacion.streamlit.app/
-
 ---
 
 ## 🚀 Funcionalidades principales
