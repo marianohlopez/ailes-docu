@@ -4,7 +4,7 @@ from data.queries import q_alum_aut
 
 # Cant de alumnos y cant de prestaciones
 
-def cant_alum_prest(tipos_seleccionados,os_condition, conn):
+def cant_alum_prest(year_condition, tipos_seleccionados, os_condition, conn):
   
   if tipos_seleccionados:
         filtro_tipos = "AND p.prestipo_nombre_corto IN ({})".format(
@@ -13,7 +13,7 @@ def cant_alum_prest(tipos_seleccionados,os_condition, conn):
   else:
       filtro_tipos = "AND p.prestipo_nombre_corto IN ('')"
 
-  cant_alumnos, cant_prestaciones = q_prest_alum(os_condition, filtro_tipos, conn)
+  cant_alumnos, cant_prestaciones = q_prest_alum(year_condition, os_condition, filtro_tipos, conn)
 
   card_alum = f"""
     <div class="card-container">
@@ -40,7 +40,7 @@ def cant_alum_prest(tipos_seleccionados,os_condition, conn):
   with col2:
       st.markdown(card_prest, unsafe_allow_html=True)
 
-def porc_alum_dic(tipos_seleccionados, os_condition, conn):
+def porc_alum_dic(year_condition, tipos_seleccionados, os_condition, conn):
 
   if tipos_seleccionados:
       filtro_tipos = "AND p.prestipo_nombre_corto IN ({})".format(
@@ -49,7 +49,7 @@ def porc_alum_dic(tipos_seleccionados, os_condition, conn):
   else:
       filtro_tipos = "AND p.prestipo_nombre_corto IN ('')"
 
-  porc_alumnos_dic = q_alum_aut(os_condition, filtro_tipos, conn)
+  porc_alumnos_dic = q_alum_aut(year_condition, os_condition, filtro_tipos, conn)
 
   # Mostrar en tarjeta
   st.markdown(f"""
@@ -62,14 +62,3 @@ def porc_alum_dic(tipos_seleccionados, os_condition, conn):
   """, unsafe_allow_html=True)
 
   st.markdown("<div class='space'></div>", unsafe_allow_html=True)
-
-def card_alumnos_inf(cant_alumnos_inf):
-
-  st.markdown(f"""
-        <div class="card-container">
-            <div class="card">
-                <div class="card-title">Cantidad de Alumnos</div>
-                <div class="card-value">{cant_alumnos_inf}</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
