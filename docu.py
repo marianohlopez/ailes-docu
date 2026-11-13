@@ -3,10 +3,9 @@ from dotenv import load_dotenv
 from data.connection import get_connection
 from data.mongo_db import register
 from logic.filters import filtro_os, filtro_tipos, year_filter
-from ui.cards import cant_alum_prest
-from ui.cards import porc_alum_dic
-from ui.charts import chart_prest_os
-from ui.charts import chart_fec_aut
+from ui.cards import cant_alum_prest, porc_alum_dic
+from ui.charts import chart_prest_os, chart_fec_aut, chart_bar_group
+from config import DISTRIBUCION_OS
 
 
 load_dotenv()
@@ -61,5 +60,6 @@ chart_fec_aut(tipos_seleccionados, os_condition, conn)
 
 st.markdown("<div class='space'></div>", unsafe_allow_html=True)
 
+chart_bar_group(conn)
 
 

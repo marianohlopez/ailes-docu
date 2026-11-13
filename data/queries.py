@@ -1,4 +1,5 @@
 import pandas as pd
+from sqlalchemy import text
 
 def q_filter_os(conn):
   q_os = """ 
@@ -139,3 +140,99 @@ def q_fec_aut(filtro_tipos, os_condition, conn):
     df_altas_bajas = pd.read_sql(q_altas_bajas, conn)
 
     return df_altas_bajas
+
+def os_filter(os):
+  if os is None:
+    return "", {}
+
+  placeholders = ", ".join(
+    [f":os_{i}" for i in range(len(os))]
+  )
+
+  params = {
+    f"os_{i}": valor
+    for i, valor in enumerate(os)
+  }
+
+  return f"AND o.os_nombre IN ({placeholders})", params
+
+SUBQUERY_TERAPIAS = """
+  SELECT DISTINCT prestacion_alumno
+  FROM v_prestaciones
+  WHERE prestacion_anio IN (2026, 2027)
+    AND prestipo_nombre_corto = 'TERAPIAS'
+    AND prestacion_estado IN (0,1)
+"""
+
+def terapy_filter(mode=None):
+  if mode is None:
+    return ""
+
+  if mode == "exclude":
+    return f"AND p.prestacion_alumno NOT IN ({SUBQUERY_TERAPIAS})"
+
+  raise ValueError("mode debe ser None o 'exclude'")
+
+def extract_indic(conn, os=None, terapias=None):
+  os_clause, params = os_filter(os)
+  terapy_clause = terapy_filter(terapias)
+  query = f""" 
+    SELECT 
+      CONCAT(p.alumno_apellido, ', ', p.alumno_nombre) AS nombre_alumno,
+      p.prestacion_id,
+      p.prestacion_anio, 
+      p.prestacion_estado,
+      p.prestacion_renueva_prox,
+      p.prestipo_nombre_corto,
+      o.os_nombre,
+      MAX(p.prestacion_fec1) AS revision,
+      MAX(p.prestacion_fec2) AS armado,
+      MAX(p.prestacion_fec3) AS envio_retiro
+    FROM v_prestaciones p 
+    LEFT JOIN v_os o
+      ON p.prestacion_os = o.os_id
+    WHERE
+      p.prestacion_estado IN (0,1)
+      AND p.prestacion_anio IN (2026, 2027)
+      AND p.prestacion_alumno NOT IN (522, 1372, 572)
+      {terapy_clause}
+      {os_clause}
+    GROUP BY p.prestacion_id
+    ORDER BY nombre_alumno;
+  """
+
+  with conn.connect() as connection:
+    result = connection.execute(text(query), params)
+    rows = result.fetchall()
+
+  return rows
+
+def extract_indic_terapias(conn):
+  query = f"""
+    SELECT
+      CONCAT(p.alumno_apellido, ', ', p.alumno_nombre) AS nombre_alumno,
+      p.prestacion_id,
+      p.prestacion_anio, 
+      p.prestacion_estado,
+      p.prestacion_renueva_prox,
+      p.prestipo_nombre_corto,
+      o.os_nombre,
+      MAX(p.prestacion_fec1) AS revision,
+      MAX(p.prestacion_fec2) AS armado,
+      MAX(p.prestacion_fec3) AS envio_retiro
+    FROM v_prestaciones p
+    LEFT JOIN v_os o 
+      ON p.prestacion_os = o.os_id
+    WHERE
+      p.prestacion_estado IN (0,1)
+      AND p.prestacion_anio IN (2026, 2027)
+      AND p.prestacion_alumno NOT IN (522, 1372, 572)
+      AND p.prestacion_alumno IN ({SUBQUERY_TERAPIAS})
+    GROUP BY p.prestacion_id
+    ORDER BY nombre_alumno
+  """
+  with conn.connect() as connection:
+        result = connection.execute(text(query))
+        rows = result.fetchall()
+
+  return rows
