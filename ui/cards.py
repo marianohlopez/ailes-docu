@@ -13,7 +13,8 @@ def cant_alum_prest(year_condition, tipos_seleccionados, os_condition, conn):
   else:
       filtro_tipos = "AND p.prestipo_nombre_corto IN ('')"
 
-  cant_alumnos, cant_prestaciones = q_prest_alum(year_condition, os_condition, filtro_tipos, conn)
+  cant_alumnos, cant_prestaciones, cant_admisiones, cant_activas = q_prest_alum(year_condition, 
+                                                 os_condition, filtro_tipos, conn)
 
   card_alum = f"""
     <div class="card-container">
@@ -32,13 +33,38 @@ def cant_alum_prest(year_condition, tipos_seleccionados, os_condition, conn):
         </div>
     </div>
     """
-  col1, col2 = st.columns(2)
+
+  card_prest_adm = f"""
+    <div class="card-container">
+        <div class="card">
+            <div class="card-title">Cantidad de Admisiones</div>
+            <div class="card-value">{cant_admisiones}</div>
+        </div>
+    </div>
+    """
+
+  card_prest_act = f"""
+    <div class="card-container">
+        <div class="card">
+            <div class="card-title">Cantidad de Activas</div>
+            <div class="card-value">{cant_activas}</div>
+        </div>
+    </div>
+    """
+  
+  col1, col2, col3, col4 = st.columns(4)
 
   with col1:
       st.markdown(card_alum, unsafe_allow_html=True)
 
   with col2:
       st.markdown(card_prest, unsafe_allow_html=True)
+
+  with col3:
+      st.markdown(card_prest_adm, unsafe_allow_html=True)
+
+  with col4:
+      st.markdown(card_prest_act, unsafe_allow_html=True)
 
 def porc_alum_dic(year_condition, tipos_seleccionados, os_condition, conn):
 

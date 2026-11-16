@@ -22,14 +22,20 @@ def q_prest_alum(year_condition, c1, c2, conn):
     q_prest_alum = f"""
     SELECT 
         COUNT(DISTINCT a.alumno_id) AS cant_alumnos,
-        COUNT(DISTINCT p.prestacion_id) AS cant_prestaciones
+        COUNT(DISTINCT p.prestacion_id) AS cant_prestaciones,
+        COUNT(DISTINCT CASE 
+          WHEN p.prestacion_estado = 1 THEN p.prestacion_id 
+          END) AS cant_prestaciones_estado_1,
+        COUNT(DISTINCT CASE 
+          WHEN p.prestacion_estado = 0 THEN p.prestacion_id 
+          END) AS cant_prestaciones_estado_0
     FROM v_os o 
     JOIN v_prestaciones p 
         ON p.prestacion_os = o.os_id
     JOIN v_alumnos a 
         ON p.alumno_id = a.alumno_id
     WHERE 
-        p.prestacion_estado = 1
+        p.prestacion_estado IN (0,1)
         {year_condition}
         AND p.prestacion_id NOT IN (521,1950)
         AND p.prestacion_alumno != 522
@@ -39,10 +45,12 @@ def q_prest_alum(year_condition, c1, c2, conn):
     df_prest_alum = pd.read_sql(q_prest_alum, conn)
 
     # Extraer los valores
-    cant_alumnos = df_prest_alum['cant_alumnos'][0]
-    cant_prestaciones = df_prest_alum['cant_prestaciones'][0]
-
-    return cant_alumnos, cant_prestaciones
+    return (
+      df_prest_alum['cant_alumnos'][0],
+      df_prest_alum['cant_prestaciones'][0],
+      df_prest_alum['cant_prestaciones_estado_0'][0],
+      df_prest_alum['cant_prestaciones_estado_1'][0]
+    )
 
 
 # Tarjeta - Porcentaje de alumnos autorizados hasta diciembre
