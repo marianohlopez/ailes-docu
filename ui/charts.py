@@ -102,6 +102,7 @@ def chart_fec_aut(tipos_seleccionados, os_condition, conn):
     # mostrar en Streamlit
     st.plotly_chart(fig, use_container_width=True)
     
+
 def chart_bar_group(conn):
 
     columnas = [
@@ -146,32 +147,18 @@ def chart_bar_group(conn):
 
         # Calcular indicadores
         datos = {
-            "Renovaciones": (
-                df["RENUEVA"]
-                .astype(str)
-                .str.strip()
-                .str.upper()
-                .eq("SI")
-                .sum()
-            ),
-
-            "Total": len(df),
-
-            "Admisión": (
-                pd.to_numeric(df["ESTADO"], errors="coerce")
-                .eq(0)
-                .sum()
-            ),
-
             "Dentro de los 5 días": (
-                df["dias_transcurridos"]
-                .between(0, 5)
-                .sum()
+                df["dias_transcurridos"].between(0, 5).sum()
             ),
 
             "Fuera de los 5 días": (
                 (df["dias_transcurridos"] > 5) |
                 (df["dias_transcurridos"] < 0)
+            ).sum(),
+
+            "Con fechas incompletas": (
+                df["REVISION"].isna() |
+                df["ENVIO_RETIRO"].isna()
             ).sum()
         }
 
@@ -192,13 +179,16 @@ def chart_bar_group(conn):
         color="Etapa",
         barmode="group",
         text="Cantidad",
+        color_discrete_map={
+          "Dentro de los 5 días": "#2EAD65",
+          "Fuera de los 5 días": "#F4C542",
+          "Con fechas incompletas": "#DC2626"
+        },
         category_orders={
             "Etapa": [
-                "Total",
-                "Renovaciones",
-                "Admisión",
                 "Dentro de los 5 días",
-                "Fuera de los 5 días"
+                "Fuera de los 5 días",
+                "Con fechas incompletas"
             ]
         },
         labels={
