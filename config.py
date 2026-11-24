@@ -33,6 +33,6 @@ DISTRIBUCION_OS = {
        "OSPM", "OSPCN (UP)", "OSPESA", "OSIM", "OSMMEDT", "Osoetsylra", "OSADRA", 
        "OSF", "OSPETELCO", "OSSIMRA", "OSDO", "OS Pers. de Dir. de Sanidad Luis Pasteur", 
        "OSCEARA", "UTA", "VW", "VAREADORES (OSV)", "OSPFP (OS Personal de Fábricas de Pintura)",
-       "OSTVLA"]
+       "OSTVLA", "OSPIFSE"]
   }
 }
